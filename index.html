@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#fdf6ec">
+<title>Unibic Field Toolkit</title>
+<style>
+  :root {
+    --bg: #fdf6ec; --card: #fffaf2; --ink: #2b1a10; --muted: #7a5a42;
+    --line: #e8d8c4; --good: #1e8449; --warn: #b9770e; --bad: #c0392b;
+    --accent: #4a2c1a; --shadow: 0 6px 24px rgba(43,26,16,0.10);
+    --shadow-lg: 0 20px 60px rgba(43,26,16,0.25);
+    --tip-bg: #2b1a10; --tip-ink: #fdf6ec;
+    --gold: #d4a24c; --wa: #25D366;
+    --fs-xs: clamp(0.62rem, 1.6vw, 0.7rem);
+    --fs-sm: clamp(0.72rem, 1.9vw, 0.8rem);
+    --fs-md: clamp(0.82rem, 2.2vw, 0.92rem);
+    --fs-lg: clamp(0.95rem, 2.6vw, 1.05rem);
+    --fs-xl: clamp(1.1rem, 3.2vw, 1.35rem);
+    --fs-2xl: clamp(1.35rem, 4.4vw, 1.8rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16110d; --card: #211912; --ink: #f3e6d6; --muted: #b99b7e;
+      --line: #35271c; --accent: #f3e6d6; --shadow: 0 6px 24px rgba(0,0,0,0.55);
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.75);
+      --tip-bg: #f3e6d6; --tip-ink: #16110d; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--ink);
+    min-height: 100vh; min-height: 100dvh;
+    padding: clamp(8px, 2.5vw, 16px);
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .app {
+    width: 100%;
+    max-width: min(560px, 100%);
+    margin: 0 auto;
+  }
+  @media (min-width: 900px) {
+    .app { max-width: 720px; }
+  }
+  @media (min-width: 1200px) {
+    .app { max-width: 860px; }
+  }
+
+  header { margin-bottom: clamp(8px, 2vw, 14px); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  header .sub { font-size: var(--fs-xs); color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  header h1 { font-size: var(--fs-xl); letter-spacing: -0.3px; line-height: 1.15; }
+  header .info-btn {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    font-weight: 800; font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow);
+  }
+  header .info-btn:active { background: var(--line); }
+
+  .tabs {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    background: var(--card); padding: 4px; border-radius: 14px;
+    box-shadow: var(--shadow); margin-bottom: clamp(10px, 2vw, 16px);
+    border: 1px solid var(--line);
+    position: sticky; top: env(safe-area-inset-top, 8px); z-index: 50;
+  }
+  .tabs button {
+    border: none; background: transparent; padding: clamp(8px, 1.8vw, 12px) 4px;
+    border-radius: 10px; font-size: var(--fs-xs); font-weight: 800;
+    color: var(--muted); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    letter-spacing: 0.3px; transition: all 0.15s; min-height: 48px;
+  }
+  .tabs button .ico { font-size: clamp(1rem, 3vw, 1.25rem); }
+  .tabs button.active { background: var(--accent); color: var(--bg); }
+  .tabs button:active:not(.active) { background: var(--line); }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  .card {
+    background: var(--card); border-radius: clamp(12px, 3vw, 16px);
+    padding: clamp(12px, 3vw, 16px);
+    box-shadow: var(--shadow); margin-bottom: clamp(8px, 2vw, 12px);
+    border: 1px solid var(--line);
+  }
+  .card h2 { font-size: var(--fs-lg); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .card .desc { font-size: var(--fs-sm); color: var(--muted); margin-bottom: 12px; line-height: 1.4; }
+
+  .field { margin-top: clamp(10px, 2.5vw, 14px); position: relative; }
+  .field:first-of-type { margin-top: 0; }
+  .field label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: var(--fs-xs); font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+    gap: 6px; line-height: 1.3;
+  }
+  .field label .val { font-size: var(--fs-md); color: var(--ink); text-transform: none; letter-spacing: 0; font-weight: 800; }
+
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--muted); color: var(--bg);
+    font-size: 0.62rem; font-weight: 900; cursor: help;
+    flex-shrink: 0; position: relative;
+    text-transform: none; letter-spacing: 0;
+  }
+  .tip:hover .tipbox, .tip:focus .tipbox, .tip.show .tipbox {
+    opacity: 1; visibility: visible; transform: translate(-50%, -100%) scale(1); }
+  .tipbox {
+    position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translate(-50%, -100%) scale(0.92);
+    background: var(--tip-bg); color: var(--tip-ink);
+    padding: 10px 12px; border-radius: 10px;
+    font-size: var(--fs-xs); font-weight: 600; line-height: 1.45;
+    width: max(200px, 60vw); max-width: min(260px, 82vw);
+    text-transform: none; letter-spacing: 0;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: all 0.15s; z-index: 100;
+    box-shadow: var(--shadow-lg); text-align: left;
+  }
+  .tipbox::after {
+    content: ""; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--tip-bg);
+  }
+
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 6px;
+    background: var(--line); border-radius: 3px; outline: none;
+    touch-action: pan-y;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 26px; height: 26px;
+    background: var(--accent); border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25); cursor: pointer;
+    border: 3px solid var(--card);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px; background: var(--accent);
+    border-radius: 50%; border: 3px solid var(--card); cursor: pointer;
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(6px, 2vw, 10px); }
+  .num {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: clamp(8px, 2.5vw, 12px); font-size: var(--fs-md); font-weight: 700;
+    color: var(--ink); width: 100%; text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  select {
+    width: 100%; font-size: var(--fs-md); font-weight: 700;
+    padding: clamp(9px, 2.5vw, 12px) 32px clamp(9px, 2.5vw, 12px) 12px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink);
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%237a5a42' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 12px center;
+    text-overflow: ellipsis;
+  }
+
+  .verdict {
+    border-radius: clamp(10px, 3vw, 14px);
+    padding: clamp(12px, 3vw, 16px);
+    margin: clamp(8px, 2vw, 12px) 0;
+    color: #fff; text-align: center;
+    transition: background 0.25s;
+  }
+  .verdict.good { background: linear-gradient(135deg, #1e8449, #27ae60); }
+  .verdict.warn { background: linear-gradient(135deg, #b9770e, #d68910); }
+  .verdict.bad  { background: linear-gradient(135deg, #922b21, #c0392b); }
+  .verdict .big { font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.4px; }
+  .verdict .label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 1.2px; opacity: 0.85; font-weight: 700; margin-bottom: 3px; }
+  .verdict .sub { font-size: var(--fs-sm); margin-top: 4px; opacity: 0.95; }
+
+  .nums { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: var(--fs-sm); }
+  .nums .k { color: var(--muted); font-weight: 600; }
+  .nums .v { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+  .nums .v.good { color: var(--good); }
+  .nums .v.bad { color: var(--bad); }
+  .nums .v.warn { color: var(--warn); }
+  .divider { grid-column: 1 / -1; height: 1px; background: var(--line); margin: 4px 0; }
+
+  .action {
+    margin-top: clamp(8px, 2vw, 12px);
+    padding: clamp(10px, 2.5vw, 14px);
+    border-radius: 12px;
+    background: var(--accent); color: var(--bg);
+    font-weight: 700; font-size: var(--fs-sm);
+    text-align: center; line-height: 1.45;
+  }
+
+  .be-box {
+    background: var(--bg); border-radius: 12px;
+    padding: clamp(10px, 2.5vw, 14px);
+    margin-top: clamp(8px, 2vw, 12px);
+    border: 1px solid var(--line);
+  }
+  .be-box .bl { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 700; }
+  .be-box .bv { font-size: var(--fs-2xl); font-weight: 800; margin-top: 2px; }
+  .be-box .bt { font-size: var(--fs-xs); color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  .reset {
+    width: 100%; padding: clamp(10px, 2.5vw, 14px); border-radius: 12px;
+    margin-top: 6px; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font-weight: 700; font-size: var(--fs-sm); cursor: pointer;
+  }
+  .reset:active { background: var(--line); }
+
+  .copy-btn {
+    width: 100%; padding: clamp(11px, 2.5vw, 14px); border-radius: 12px;
+    margin-top: 8px; border: none; background: var(--good); color: #fff;
+    font-weight: 800; font-size: var(--fs-sm); cursor: pointer;
+  }
+  .copy-btn:active { opacity: 0.85; }
+
+  .warn-line {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    font-size: var(--fs-xs); font-weight: 600; line-height: 1.4;
+  }
+  .warn-line.good { background: rgba(30,132,73,0.12); color: var(--good); }
+  .warn-line.warn { background: rgba(185,119,14,0.15); color: var(--warn); }
+  .warn-line.bad { background: rgba(192,57,43,0.12); color: var(--bad); }
+
+  .list-item {
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 8px; font-size: var(--fs-sm);
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .li-name { font-weight: 700; }
+  .list-item .li-sub { font-size: var(--fs-xs); color: var(--muted); margin-top: 2px; }
+  .list-item .li-val { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  .toast {
+    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent); color: var(--bg);
+    padding: 10px 20px; border-radius: 999px;
+    font-size: var(--fs-sm); font-weight: 700;
+    box-shadow: var(--shadow-lg); opacity: 0;
+    transition: all 0.3s; pointer-events: none; z-index: 200;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ============ INTRO MODAL (5W+1H) ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(20,12,6,0.6);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 500; display: flex; align-items: center; justify-content: center;
+    padding: clamp(8px, 3vw, 24px);
+    opacity: 0; visibility: hidden; transition: all 0.25s;
+    overflow-y: auto;
+  }
+  .modal-backdrop.show { opacity: 1; visibility: visible; }
+  .modal {
+    background: var(--card); border-radius: clamp(16px, 4vw, 24px);
+    width: 100%; max-width: min(560px, 100%);
+    max-height: calc(100dvh - 32px); overflow-y: auto;
+    box-shadow: var(--shadow-lg); border: 1px solid var(--line);
+    transform: scale(0.92) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+  .modal-backdrop.show .modal { transform: scale(1) translateY(0); }
+
+  .modal-head {
+    padding: clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px) clamp(8px, 2vw, 12px);
+    position: sticky; top: 0; background: var(--card);
+    border-bottom: 1px solid var(--line); z-index: 2;
+    border-radius: clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px) 0 0;
+  }
+  .modal-head .eyebrow {
+    font-size: var(--fs-xs); color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .modal-head h2 { font-size: var(--fs-2xl); letter-spacing: -0.4px; line-height: 1.15; }
+  .modal-head .subhead { font-size: var(--fs-sm); color: var(--muted); margin-top: 6px; line-height: 1.4; }
+  .modal-close {
+    position: absolute; top: clamp(12px, 3vw, 18px); right: clamp(12px, 3vw, 18px);
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+    font-size: 1.1rem; font-weight: 800; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 3;
+  }
+  .modal-close:active { background: var(--line); }
+
+  .modal-body { padding: clamp(12px, 3vw, 20px) clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px); }
+
+  .wh-grid {
+    display: grid; grid-template-columns: 1fr; gap: clamp(8px, 2vw, 12px);
+    margin-bottom: clamp(12px, 3vw, 16px);
+  }
+  @media (min-width: 560px) {
+    .wh-grid { grid-template-columns: 1fr 1fr; }
+    .wh-grid .wh-item:first-child { grid-column: 1 / -1; }
+  }
+  .wh-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 12px; background: var(--bg);
+    border-radius: 12px; border: 1px solid var(--line);
+  }
+  .wh-item .wh-badge {
+    width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: 8px; background: var(--accent); color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: var(--fs-sm); letter-spacing: 0.5px;
+  }
+  .wh-item .wh-text { flex: 1; min-width: 0; }
+  .wh-item .wh-label {
+    font-size: var(--fs-xs); color: var(--muted); text-transform: uppercase;
+    font-weight: 800; letter-spacing: 1px; margin-bottom: 2px;
+  }
+  .wh-item .wh-desc { font-size: var(--fs-sm); font-weight: 600; line-height: 1.4; color: var(--ink); }
+
+  .modal-how {
+    background: linear-gradient(135deg, var(--accent), rgba(74,44,26,0.85));
+    color: var(--bg); border-radius: 14px;
+    padding: clamp(12px, 3vw, 16px);
+    margin-bottom: clamp(12px, 3vw, 16px);
+  }
+  .modal-how .how-title {
+    font-size: var(--fs-xs); text-transform: uppercase;
+    letter-spacing: 1.5px; font-weight: 800;
+    opacity: 0.8; margin-bottom: 6px;
+  }
+  .modal-how .how-body { font-size: var(--fs-sm); line-height: 1.5; font-weight: 600; }
+
+  .modal-cta { display: flex; flex-direction: column; gap: 8px; }
+  .modal-cta .primary {
+    padding: clamp(12px, 3vw, 16px); border-radius: 12px;
+    border: none; background: var(--good); color: #fff;
+    font-weight: 800; font-size: var(--fs-md); cursor: pointer;
+  }
+  .modal-cta .primary:active { opacity: 0.85; }
+  .modal-cta .secondary {
+    padding: clamp(10px, 2.5vw, 14px); border-radius: 12px;
+    border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font-weight: 700; font-size: var(--fs-sm); cursor: pointer;
+  }
+  .modal-cta .secondary:active { background: var(--line); }
+  .modal-cta .foot {
+    font-size: var(--fs-xs); color: var(--muted);
+    text-align: center; margin-top: 6px; line-height: 1.4;
+  }
+
+  /* Body scroll lock when modal open */
+  body.modal-open { overflow: hidden; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="sub">Unibic · Field Toolkit</div>
+      <h1>🍪 Sales Handy Calculator</h1>
+    </div>
+    <button class="info-btn" id="infoBtn" aria-label="About this toolkit">i</button>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="negotiate" class="active"><span class="ico">🤝</span>Negotiate</button>
+    <button data-tab="order"><span class="ico">📦</span>Order</button>
+    <button data-tab="store"><span class="ico">🏪</span>Store</button>
+    <button data-tab="report"><span class="ico">📊</span>Report</button>
+  </div>
+
+  <!-- NEGOTIATE -->
+  <div class="panel active" id="panel-negotiate">
+    <div class="card">
+      <h2>1. Deal Breaker</h2>
+      <div class="desc">Should I accept this discount? Net margin, break-even, counter-offer.</div>
+      <div class="field">
+        <label>SKU <span class="tip" tabindex="0" data-tip="Pick a Unibic product. MRP and cost auto-fill from the catalogue at the top of the file.">?</span></label>
+        <select id="sku"></select>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>MRP ₹ <span class="tip" tabindex="0" data-tip="Maximum Retail Price printed on the pack. What the consumer pays.">?</span></label>
+          <input class="num" type="number" id="mrp" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Cost ₹ <span class="tip" tabindex="0" data-tip="What Unibic spends to make, pack and ship one unit. Your true cost, not trade price.">?</span></label>
+          <input class="num" type="number" id="cost" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label>Quantity <span class="val" id="qtyVal">50</span> <span class="tip" tabindex="0" data-tip="Number of units the buyer is ordering.">?</span></label>
+        <input type="range" id="qty" min="1" max="500" step="1" value="50">
+      </div>
+      <div class="field">
+        <label>Discount offered <span class="val" id="discVal">15%</span> <span class="tip" tabindex="0" data-tip="The % off MRP the buyer is demanding. Comes straight off your revenue.">?</span></label>
+        <input type="range" id="disc" min="0" max="40" step="0.5" value="15">
+      </div>
+      <div class="field">
+        <label>Scheme cost to us <span class="val" id="schemeVal">5%</span> <span class="tip" tabindex="0" data-tip="Extra trade spend on top of discount: display money, free units converted to %, off-invoice scheme. Where margin quietly dies.">?</span></label>
+        <input type="range" id="scheme" min="0" max="25" step="0.5" value="5">
+      </div>
+      <div class="verdict good" id="verdict">
+        <div class="label">Verdict</div>
+        <div class="big" id="verdictBig">—</div>
+        <div class="sub" id="verdictSub"></div>
+      </div>
+      <div class="nums">
+        <div class="k">List value</div> <div class="v" id="nList">₹0</div>
+        <div class="k">Revenue (after disc)</div> <div class="v" id="nRev">₹0</div>
+        <div class="k">Gross margin</div> <div class="v" id="nGM">₹0</div>
+        <div class="k">Scheme cost</div> <div class="v bad" id="nScheme">₹0</div>
+        <div class="divider"></div>
+        <div class="k">Net margin</div> <div class="v" id="nNet">₹0</div>
+        <div class="k">Net margin %</div> <div class="v" id="nNetPct">0%</div>
+      </div>
+      <div class="be-box">
+        <div class="bl">Break-even discount</div>
+        <div class="bv" id="beVal">—</div>
+        <div class="bt" id="beText">the discount at which this order earns ₹0</div>
+      </div>
+      <div class="action" id="actionText">—</div>
+      <button class="copy-btn" id="dbShareBtn" style="background:var(--wa);">📱 Share verdict on WhatsApp</button>
+    </div>
+
+    <div class="card">
+      <h2>2. Scheme Stacker</h2>
+      <div class="desc">Discount + free units + display money = total effective cost.</div>
+      <div class="field"><label>Order value ₹ <span class="tip" tabindex="0" data-tip="Total value of the order before any discount. Usually MRP × quantity.">?</span></label>
+        <input class="num" type="number" id="ssOrder" inputmode="decimal" value="2000"></div>
+      <div class="field"><label>Discount % <span class="val" id="ssDiscVal">10%</span> <span class="tip" tabindex="0" data-tip="Straight % off the order value.">?</span></label>
+        <input type="range" id="ssDisc" min="0" max="40" step="0.5" value="10"></div>
+      <div class="field"><label>Free units scheme <span class="tip" tabindex="0" data-tip="Scheme like 10+1 means buy 10 get 1 free. That's 9.09% effective discount, not 10%.">?</span></label>
+        <div class="grid2">
+          <input class="num" type="number" id="ssBuy" inputmode="numeric" value="10" placeholder="Buy">
+          <input class="num" type="number" id="ssFree" inputmode="numeric" value="1" placeholder="Free">
+        </div>
+      </div>
+      <div class="field"><label>Display / trade spend ₹ <span class="tip" tabindex="0" data-tip="Fixed money paid per store for display, endcap, or visibility. In rupees, not %.">?</span></label>
+        <input class="num" type="number" id="ssDisplay" inputmode="decimal" value="200"></div>
+      <div class="be-box"><div class="bl">Total effective discount</div><div class="bv" id="ssTotal">—</div><div class="bt" id="ssBreakdown">—</div></div>
+      <div class="warn-line" id="ssWarn">—</div>
+    </div>
+
+    <div class="card">
+      <h2>3. Counter Calculator</h2>
+      <div class="desc">Buyer wants X%. You can give Y%. Three equal-value counter scripts.</div>
+      <div class="field"><label>Buyer's ask % <span class="val" id="ccAskVal">20%</span> <span class="tip" tabindex="0" data-tip="What discount the buyer is demanding. You'll counter below this.">?</span></label>
+        <input type="range" id="ccAsk" min="0" max="40" step="0.5" value="20"></div>
+      <div class="field"><label>Your max % <span class="val" id="ccMaxVal">12%</span> <span class="tip" tabindex="0" data-tip="The most discount you're willing or able to give. This is your walk-away point.">?</span></label>
+        <input type="range" id="ccMax" min="0" max="40" step="0.5" value="12"></div>
+      <div class="field"><label>Order value ₹ <span class="tip" tabindex="0" data-tip="Total order value. Used to convert % discount into rupees of scheme and display money.">?</span></label>
+        <input class="num" type="number" id="ccOrder" inputmode="decimal" value="2000"></div>
+      <div class="list-item"><div><div class="li-name">Option A — Pure discount</div><div class="li-sub" id="ccA-sub">—</div></div><div class="li-val" id="ccA-val">—</div></div>
+      <div class="list-item"><div><div class="li-name">Option B — Disc + free units</div><div class="li-sub" id="ccB-sub">—</div></div><div class="li-val" id="ccB-val">—</div></div>
+      <div class="list-item"><div><div class="li-name">Option C — Disc + display</div><div class="li-sub" id="ccC-sub">—</div></div><div class="li-val" id="ccC-val">—</div></div>
+      <div class="action" id="ccScript">—</div>
+    </div>
+
+    <div class="card">
+      <h2>4. Free Units Converter</h2>
+      <div class="desc">"10+1" is 9.09% off, not 10%. Convert both ways instantly.</div>
+      <div class="field"><label>Buy <span class="tip" tabindex="0" data-tip="Paid units. In 10+1, this is 10.">?</span></label>
+        <input class="num" type="number" id="fuBuy" inputmode="numeric" value="10"></div>
+      <div class="field"><label>Free <span class="tip" tabindex="0" data-tip="Free units. In 10+1, this is 1.">?</span></label>
+        <input class="num" type="number" id="fuFree" inputmode="numeric" value="1"></div>
+      <div class="be-box"><div class="bl">Equivalent discount</div><div class="bv" id="fuResult">—</div><div class="bt" id="fuText">—</div></div>
+      <div class="warn-line warn" id="fuWarn">Common trap: "10+1" is 9.09% off, not 10%. Quoting the wrong number loses credibility.</div>
+    </div>
+  </div>
+
+  <!-- ORDER -->
+  <div class="panel" id="panel-order">
+    <div class="card">
+      <h2>5. Order Slab</h2>
+      <div class="desc">Push the order a bit more to hit the next slab? How much more, and what's the gain?</div>
+      <div class="field"><label>Current order ₹ <span class="tip" tabindex="0" data-tip="What the buyer has already agreed to order.">?</span></label>
+        <input class="num" type="number" id="osCurrent" inputmode="decimal" value="4200"></div>
+      <div class="field"><label>Next slab at ₹ <span class="tip" tabindex="0" data-tip="The order-value threshold that unlocks a better discount or margin.">?</span></label>
+        <input class="num" type="number" id="osNext" inputmode="decimal" value="5000"></div>
+      <div class="field"><label>Extra margin at slab % <span class="val" id="osMarginVal">3%</span> <span class="tip" tabindex="0" data-tip="The additional discount % the buyer gets once the slab is hit.">?</span></label>
+        <input type="range" id="osMargin" min="0" max="20" step="0.5" value="3"></div>
+      <div class="be-box"><div class="bl">Gap to next slab</div><div class="bv" id="osGap">—</div><div class="bt" id="osText">—</div></div>
+      <div class="warn-line good" id="osGain">—</div>
+    </div>
+
+    <div class="card">
+      <h2>6. Stock Cover</h2>
+      <div class="desc">How many days will this order last? Prevents overstock returns.</div>
+      <div class="field"><label>Order units <span class="tip" tabindex="0" data-tip="Total units being ordered.">?</span></label>
+        <input class="num" type="number" id="scUnits" inputmode="numeric" value="120"></div>
+      <div class="field"><label>Avg daily sales (units) <span class="tip" tabindex="0" data-tip="How many units the store sells per day on average.">?</span></label>
+        <input class="num" type="number" id="scDaily" inputmode="numeric" value="4"></div>
+      <div class="be-box"><div class="bl">Days of cover</div><div class="bv" id="scDays">—</div><div class="bt" id="scText">—</div></div>
+      <div class="warn-line" id="scWarn">—</div>
+    </div>
+
+    <div class="card">
+      <h2>7. Return Risk</h2>
+      <div class="desc">Will this order come back? Overstock is the #1 cause of returns.</div>
+      <div class="field"><label>Days of cover <span class="tip" tabindex="0" data-tip="Auto-filled from Stock Cover above.">?</span></label>
+        <input class="num" type="number" id="rrDays" inputmode="decimal" value="30"></div>
+      <div class="field"><label>Store type <span class="tip" tabindex="0" data-tip="Kirana = small high-freq. Modern = larger slower turns. Cafe = very slow turns.">?</span></label>
+        <select id="rrType"><option value="kirana">Kirana</option><option value="modern">Modern Trade</option><option value="cafe">Cafe</option></select></div>
+      <div class="field"><label>SKU velocity <span class="tip" tabindex="0" data-tip="Fast = high-turn SKUs like Choco Chip. Slow = premium niche SKUs.">?</span></label>
+        <select id="rrVelocity"><option value="fast">Fast mover</option><option value="medium">Medium</option><option value="slow">Slow mover</option></select></div>
+      <div class="verdict good" id="rrVerdict">
+        <div class="label">Return risk</div><div class="big" id="rrBig">—</div><div class="sub" id="rrSub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STORE -->
+  <div class="panel" id="panel-store">
+    <div class="card">
+      <h2>8. Shelf Slot Decision</h2>
+      <div class="desc">One eye-level slot. Two SKUs. Which earns more margin per month?</div>
+      <div class="grid2">
+        <div>
+          <div class="field"><label>SKU A <span class="tip" tabindex="0" data-tip="First candidate for the eye-level slot.">?</span></label><select id="slotA"></select></div>
+          <div class="field"><label>Units/mo A <span class="tip" tabindex="0" data-tip="Monthly units this store sells.">?</span></label><input class="num" type="number" id="slotAUnits" inputmode="numeric" value="80"></div>
+        </div>
+        <div>
+          <div class="field"><label>SKU B <span class="tip" tabindex="0" data-tip="Second candidate for the same slot.">?</span></label><select id="slotB"></select></div>
+          <div class="field"><label>Units/mo B <span class="tip" tabindex="0" data-tip="Monthly units this store sells.">?</span></label><input class="num" type="number" id="slotBUnits" inputmode="numeric" value="40"></div>
+        </div>
+      </div>
+      <div class="list-item"><div><div class="li-name" id="slotA-name">A</div><div class="li-sub" id="slotA-sub">—</div></div><div class="li-val" id="slotA-val">—</div></div>
+      <div class="list-item"><div><div class="li-name" id="slotB-name">B</div><div class="li-sub" id="slotB-sub">—</div></div><div class="li-val" id="slotB-val">—</div></div>
+      <div class="action" id="slotWinner">—</div>
+    </div>
+
+    <div class="card">
+      <h2>9. Store Rank</h2>
+      <div class="desc">Margin per travel-minute. Ranks your stores so you know which to visit and which to skip.</div>
+      <div id="storeRows"></div>
+      <button class="reset" id="addStoreBtn">+ Add store</button>
+      <div class="warn-line warn" id="storeWarn">Enter at least two stores to see which to skip.</div>
+    </div>
+
+    <div class="card">
+      <h2>10. Per-Store Break-even</h2>
+      <div class="desc">Minimum this store must buy monthly for the visit to be worth your time.</div>
+      <div class="field"><label>Travel time (min) <span class="tip" tabindex="0" data-tip="Round-trip travel time to this store from your last stop.">?</span></label>
+        <input class="num" type="number" id="pbTravel" inputmode="numeric" value="15"></div>
+      <div class="field"><label>Cost per hour ₹ <span class="tip" tabindex="0" data-tip="Your loaded cost per hour (salary + fuel + vehicle).">?</span></label>
+        <input class="num" type="number" id="pbCost" inputmode="decimal" value="300"></div>
+      <div class="field"><label>Target margin % <span class="val" id="pbMarginVal">15%</span> <span class="tip" tabindex="0" data-tip="Minimum net margin % you need on the order to justify the visit.">?</span></label>
+        <input type="range" id="pbMargin" min="0" max="40" step="0.5" value="15"></div>
+      <div class="be-box"><div class="bl">Minimum monthly order</div><div class="bv" id="pbMin">—</div><div class="bt" id="pbText">—</div></div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="panel" id="panel-report">
+    <div class="card">
+      <h2>11. Day Margin Tally</h2>
+      <div class="desc">Log each order. See blended margin. Copy summary to WhatsApp. Auto-clears at midnight.</div>
+      <div class="grid2">
+        <div class="field"><label>SKU <span class="tip" tabindex="0" data-tip="Pick the SKU you just sold.">?</span></label><select id="dtSku"></select></div>
+        <div class="field"><label>Units <span class="tip" tabindex="0" data-tip="Number of units in this order.">?</span></label><input class="num" type="number" id="dtUnits" inputmode="numeric" value="10"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Discount % <span class="tip" tabindex="0" data-tip="Discount % given on this order.">?</span></label><input class="num" type="number" id="dtDisc" inputmode="decimal" value="10"></div>
+        <div class="field"><label>Scheme % <span class="tip" tabindex="0" data-tip="Trade scheme % applied to this order.">?</span></label><input class="num" type="number" id="dtScheme" inputmode="decimal" value="3"></div>
+      </div>
+      <button class="copy-btn" id="dtAddBtn" style="background:var(--accent);">+ Log this order</button>
+      <div id="dtList" style="margin-top:12px;"></div>
+      <div class="be-box" id="dtSummary" style="display:none;">
+        <div class="bl">Day total</div>
+        <div class="bv" id="dtTotalRev">₹0</div>
+        <div class="bt" id="dtBlended">—</div>
+      </div>
+      <button class="copy-btn" id="dtCopyBtn" style="display:none;">📋 Copy summary for WhatsApp</button>
+      <button class="reset" id="dtClearBtn" style="display:none;">Clear day</button>
+    </div>
+
+    <div class="card">
+      <h2>12. Target Gap</h2>
+      <div class="desc">How much more to sell this month, and at what daily run-rate?</div>
+      <div class="grid2">
+        <div class="field"><label>Monthly target ₹ <span class="tip" tabindex="0" data-tip="Your assigned monthly sales target in rupees.">?</span></label><input class="num" type="number" id="tgTarget" inputmode="decimal" value="100000"></div>
+        <div class="field"><label>Month-to-date ₹ <span class="tip" tabindex="0" data-tip="How much you've sold so far this month.">?</span></label><input class="num" type="number" id="tgMTD" inputmode="decimal" value="35000"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Days remaining <span class="tip" tabindex="0" data-tip="Working days left in the month. Exclude Sundays and holidays.">?</span></label><input class="num" type="number" id="tgDays" inputmode="numeric" value="12"></div>
+        <div class="field"><label>Target margin % <span class="tip" tabindex="0" data-tip="Your monthly margin % target. Used to flag if you're selling volume at low margin.">?</span></label><input class="num" type="number" id="tgMargin" inputmode="decimal" value="15"></div>
+      </div>
+      <div class="be-box"><div class="bl">Daily run-rate needed</div><div class="bv" id="tgDaily">—</div><div class="bt" id="tgText">—</div></div>
+      <div class="warn-line" id="tgWarn">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ INTRO MODAL (5W+1H) ============ -->
+<div class="modal-backdrop" id="introModal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="eyebrow">Welcome · Unibic Field Toolkit</div>
+      <h2 id="introTitle">12 tools, one screen</h2>
+      <div class="subhead">Everything a Unibic rep needs to price, negotiate, and plan — in 30 seconds.</div>
+      <button class="modal-close" id="introClose" aria-label="Close intro">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="wh-grid">
+        <div class="wh-item">
+          <div class="wh-badge">W1</div>
+          <div class="wh-text">
+            <div class="wh-label">What</div>
+            <div class="wh-desc">A pocket calculator with 12 field tools: deal margin, break-even discount, scheme stacking, stock cover, return risk, shelf decisions, route ranking, day tally, target gap.</div>
+          </div>
+        </div>
+        <div class="wh-item">
+          <div class="wh-badge">W2</div>
+          <div class="wh-text">
+            <div class="wh-label">Who</div>
+            <div class="wh-desc">Unibic field reps and area managers. One file, one phone, no login.</div>
+          </div>
+        </div>
+        <div class="wh-item">
+          <div class="wh-badge">W3</div>
+          <div class="wh-text">
+            <div class="wh-label">When</div>
+            <div class="wh-desc">In the store, at the order, on the route, and at the end-of-day report. Day Tally auto-clears at midnight.</div>
+          </div>
+        </div>
+        <div class="wh-item">
+          <div class="wh-badge">W4</div>
+          <div class="wh-text">
+            <div class="wh-label">Where</div>
+            <div class="wh-desc">Any phone browser. Works offline. Nothing is sent to a server — your numbers stay on your device.</div>
+          </div>
+        </div>
+        <div class="wh-item">
+          <div class="wh-badge">W5</div>
+          <div class="wh-text">
+            <div class="wh-label">Why</div>
+            <div class="wh-desc">Reps make margin decisions in their head and get them wrong. This makes every decision a number — with a break-even, a counter-offer, and a shareable verdict.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-how">
+        <div class="how-title">How — 3 things to know</div>
+        <div class="how-body">
+          ① Pick a tab. ② Move the sliders. ③ Tap the <strong>?</strong> on any input to learn what it means. The verdict updates live. When it matters, share it on WhatsApp.
+        </div>
+      </div>
+      <div class="modal-cta">
+        <button class="primary" id="introStart">Start using the toolkit →</button>
+        <button class="secondary" id="introAgain">Show this intro at launch</button>
+        <div class="foot">Prototype · SKU prices are editable · No data leaves your device</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ UNIBIC FULL PORTFOLIO (35+ SKUs) ============
+// ⚠️ MRP/COST ARE PLACEHOLDERS — replace with real Unibic pricing before pilot.
+const SKUS = [
+  { id: "choco-chip", name: "Choco Chip", mrp: 40, cost: 28 },
+  { id: "choco-nut", name: "Choco Nut", mrp: 45, cost: 31 },
+  { id: "choco-ripple", name: "Choco Ripple", mrp: 20, cost: 14 },
+  { id: "choco-kiss", name: "Choco Kiss", mrp: 50, cost: 33 },
+  { id: "double-choco", name: "Double Chocolate Chip", mrp: 50, cost: 34 },
+  { id: "butter", name: "Butter Cookie", mrp: 45, cost: 31 },
+  { id: "cashew", name: "Cashew Badam", mrp: 60, cost: 44 },
+  { id: "pista-badam", name: "Pista Badam", mrp: 60, cost: 44 },
+  { id: "cashew-classic", name: "Cashew Cookies", mrp: 55, cost: 40 },
+  { id: "danish-coconut", name: "Danish Coconut", mrp: 55, cost: 39 },
+  { id: "chilli-butter", name: "Chilli Butter (Doosra)", mrp: 50, cost: 30 },
+  { id: "jeera", name: "Jeera Cookies", mrp: 40, cost: 29 },
+  { id: "ginger-nut", name: "Ginger Nut", mrp: 40, cost: 29 },
+  { id: "milk", name: "Milk Cookies", mrp: 35, cost: 26 },
+  { id: "oatmeal", name: "Oatmeal", mrp: 55, cost: 42 },
+  { id: "honey-oatmeal", name: "Honey Oatmeal", mrp: 55, cost: 42 },
+  { id: "multigrain", name: "Multigrain", mrp: 60, cost: 46 },
+  { id: "daily-digestive", name: "Daily Digestive", mrp: 50, cost: 38 },
+  { id: "ragi", name: "Ragi Cookies (My Healthy)", mrp: 60, cost: 46 },
+  { id: "oats-40", name: "40% Oats Cookies", mrp: 65, cost: 50 },
+  { id: "gluten-free", name: "Gluten-Free", mrp: 70, cost: 55 },
+  { id: "sf-cashew", name: "Sugar-Free Cashew", mrp: 70, cost: 55 },
+  { id: "sf-oatmeal", name: "Sugar-Free Oatmeal", mrp: 65, cost: 51 },
+  { id: "sf-pineapple", name: "Sugar-Free Pineapple", mrp: 65, cost: 51 },
+  { id: "sf-orange", name: "Sugar-Free Orange Cream", mrp: 65, cost: 51 },
+  { id: "sf-multigrain", name: "Sugar-Free Multigrain", mrp: 70, cost: 55 },
+  { id: "fruit-nut", name: "Fruit & Nut", mrp: 65, cost: 48 },
+  { id: "snappers-india", name: "Snappers India Spice", mrp: 35, cost: 26 },
+  { id: "snappers-cream", name: "Snappers Cream & Onion", mrp: 35, cost: 26 },
+  { id: "biscott-caramel", name: "Biscott Caramel Cinnamon", mrp: 120, cost: 90 },
+  { id: "gift-celebration", name: "Gift Pack Celebration", mrp: 250, cost: 190 },
+  { id: "gift-festive", name: "Gift Pack Festive Moments", mrp: 300, cost: 230 },
+  { id: "assorted", name: "Assorted Pack", mrp: 290, cost: 220 },
+  { id: "bar-almond-oats", name: "Snack Bar Almond & Oats", mrp: 30, cost: 22 },
+  { id: "bar-fruit-choco", name: "Snack Bar Fruit & Nut Choco", mrp: 30, cost: 22 },
+];
+
+const $ = id => document.getElementById(id);
+const inr = n => "₹" + Math.round(n).toLocaleString("en-IN");
+const pct = n => n.toFixed(1) + "%";
+const num = el => parseFloat(el.value) || 0;
+const int = el => parseInt(el.value, 10) || 0;
+const getSku = id => SKUS.find(s => s.id === id) || SKUS[0];
+
+// ============ TOOLTIPS ============
+function initTooltips() {
+  document.querySelectorAll(".tip").forEach(tip => {
+    if (tip.querySelector(".tipbox")) return;
+    const text = tip.dataset.tip;
+    if (!text) return;
+    const box = document.createElement("div");
+    box.className = "tipbox";
+    box.textContent = text;
+    tip.appendChild(box);
+    tip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.querySelectorAll(".tip.show").forEach(t => t !== tip && t.classList.remove("show"));
+      tip.classList.toggle("show");
+    });
+  });
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".tip.show").forEach(t => t.classList.remove("show"));
+  });
+}
+
+// ============ TOAST ============
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+// ============ INTRO MODAL ============
+const MODAL_KEY = "unibic_intro_shown";
+function openModal() {
+  $("introModal").classList.add("show");
+  document.body.classList.add("modal-open");
+}
+function closeModal(savePref) {
+  $("introModal").classList.remove("show");
+  document.body.classList.remove("modal-open");
+  if (savePref) localStorage.setItem(MODAL_KEY, "1");
+}
+$("introClose").addEventListener("click", () => closeModal(true));
+$("introStart").addEventListener("click", () => closeModal(true));
+$("introAgain").addEventListener("click", () => {
+  localStorage.removeItem(MODAL_KEY);
+  toast("Intro will show on next launch");
+});
+$("introModal").addEventListener("click", (e) => {
+  if (e.target === $("introModal")) closeModal(true);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("introModal").classList.contains("show")) closeModal(true);
+});
+$("infoBtn").addEventListener("click", openModal);
+
+// Show on first launch
+(function maybeShowIntro() {
+  if (!localStorage.getItem(MODAL_KEY)) setTimeout(openModal, 350);
+})();
+
+// ============ TABS ============
+$("tabs").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("panel-" + btn.dataset.tab).classList.add("active");
+});
+
+// ============ SKU DROPDOWNS ============
+function fillSkuSelect(sel, def) {
+  SKUS.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s.id;
+    o.textContent = s.name;
+    sel.appendChild(o);
+  });
+  if (def) sel.value = def;
+}
+fillSkuSelect($("sku"));
+fillSkuSelect($("slotA"), "choco-chip");
+fillSkuSelect($("slotB"), "chilli-butter");
+fillSkuSelect($("dtSku"), "choco-chip");
+
+// ============ 1. DEAL BREAKER ============
+function recalcDeal() {
+  const mrp = Math.max(0, num($("mrp")));
+  const cost = Math.max(0, num($("cost")));
+  const qty = int($("qty"));
+  const disc = num($("disc"));
+  const scheme = num($("scheme"));
+  $("qtyVal").textContent = qty;
+  $("discVal").textContent = disc.toFixed(1) + "%";
+  $("schemeVal").textContent = scheme.toFixed(1) + "%";
+  const list = mrp * qty;
+  const rev = list * (1 - disc / 100);
+  const gm = (mrp - cost) * qty * (1 - disc / 100);
+  const schemeCost = list * (scheme / 100);
+  const net = rev - cost * qty - schemeCost;
+  const netPct = rev > 0 ? (net / rev) * 100 : 0;
+  let be = 0;
+  if (mrp > 0) be = (1 - cost / mrp - scheme / 100) * 100;
+  be = Math.max(0, Math.min(100, be));
+  $("nList").textContent = inr(list);
+  $("nRev").textContent = inr(rev);
+  $("nGM").textContent = inr(gm);
+  $("nScheme").textContent = "-" + inr(schemeCost);
+  $("nNet").textContent = inr(net);
+  $("nNetPct").textContent = pct(netPct);
+  $("nNet").className = "v " + (net >= 0 ? "good" : "bad");
+  $("nNetPct").className = "v " + (netPct >= 15 ? "good" : netPct >= 0 ? "warn" : "bad");
+  $("beVal").textContent = be.toFixed(1) + "%";
+  $("beText").textContent = be < 100
+    ? `you're at ${disc.toFixed(1)}% — ${(be - disc >= 0 ? (be - disc).toFixed(1) + " pts headroom" : (disc - be).toFixed(1) + " pts past break-even")}`
+    : "cost ≥ MRP — negative margin at any discount";
+  const v = $("verdict"), vBig = $("verdictBig"), vSub = $("verdictSub"), act = $("actionText");
+  v.classList.remove("good", "warn", "bad");
+  if (net <= 0) {
+    v.classList.add("bad"); vBig.textContent = "WALK AWAY";
+    vSub.textContent = `Losing ${inr(Math.abs(net))} on this order`;
+    act.textContent = `👉 Counter at ${Math.max(0, be - 2).toFixed(1)}% or below. Above that, not worth stocking.`;
+  } else if (netPct < 10) {
+    v.classList.add("warn"); vBig.textContent = "THIN MARGIN";
+    vSub.textContent = `Only ${pct(netPct)} net — below 15% floor`;
+    act.textContent = `👉 Accept only if it wins shelf space. Counter at ${Math.max(0, disc - 3).toFixed(1)}%.`;
+  } else if (netPct < 15) {
+    v.classList.add("warn"); vBig.textContent = "BORDERLINE";
+    vSub.textContent = `${pct(netPct)} net — just under target`;
+    act.textContent = `👉 Fine if strategic SKU. Otherwise counter at ${Math.max(0, disc - 2).toFixed(1)}%.`;
+  } else {
+    v.classList.add("good"); vBig.textContent = "GOOD DEAL";
+    vSub.textContent = `${pct(netPct)} net — ${inr(net)} earned`;
+    act.textContent = `👉 Accept. You're ${(be - disc).toFixed(1)} pts below break-even.`;
+  }
+}
+$("sku").addEventListener("change", () => {
+  const s = getSku($("sku").value);
+  $("mrp").value = s.mrp;
+  $("cost").value = s.cost;
+  recalcDeal();
+});
+["mrp", "cost", "qty", "disc", "scheme"].forEach(id => $(id).addEventListener("input", recalcDeal));
+
+// ============ SHARE ============
+function shareDealVerdict() {
+  const sku = getSku($("sku").value);
+  const mrp = num($("mrp")), cost = num($("cost")), qty = int($("qty"));
+  const disc = num($("disc")), scheme = num($("scheme"));
+  const list = mrp * qty;
+  const rev = list * (1 - disc / 100);
+  const schemeCost = list * (scheme / 100);
+  const net = rev - cost * qty - schemeCost;
+  const netPct = rev > 0 ? (net / rev) * 100 : 0;
+  const be = mrp > 0 ? Math.max(0, (1 - cost / mrp - scheme / 100) * 100) : 0;
+  const verdict = net <= 0 ? "WALK AWAY" : netPct < 15 ? "BORDERLINE" : "GOOD DEAL";
+  const emoji = net <= 0 ? "🔴" : netPct < 15 ? "🟡" : "🟢";
+  const msg =
+    `${emoji} *${verdict}* — ${sku.name}\n` +
+    `Order: ${qty} units @ ${disc.toFixed(1)}% off, ${scheme.toFixed(1)}% scheme\n` +
+    `Net margin: ${inr(net)} (${netPct.toFixed(1)}%)\n` +
+    `Break-even discount: ${be.toFixed(1)}%\n` +
+    `— Unibic Deal Breaker`;
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+$("dbShareBtn").addEventListener("click", shareDealVerdict);
+
+// ============ 2. SCHEME STACKER ============
+function recalcSchemeStacker() {
+  const order = num($("ssOrder"));
+  const disc = num($("ssDisc"));
+  const buy = int($("ssBuy"));
+  const free = int($("ssFree"));
+  const display = num($("ssDisplay"));
+  $("ssDiscVal").textContent = disc.toFixed(1) + "%";
+  const freeUnitsPct = buy > 0 ? (free / (buy + free)) * 100 : 0;
+  const total = disc + freeUnitsPct + (order > 0 ? (display / order) * 100 : 0);
+  $("ssTotal").textContent = total.toFixed(1) + "%";
+  $("ssBreakdown").textContent = `${disc.toFixed(1)}% discount + ${freeUnitsPct.toFixed(2)}% from ${buy}+${free} + ${(order > 0 ? (display / order) * 100 : 0).toFixed(2)}% display`;
+  const warn = $("ssWarn");
+  warn.classList.remove("good", "warn", "bad");
+  if (total < 15) { warn.classList.add("good"); warn.textContent = "✓ Total effective discount under 15% — healthy."; }
+  else if (total < 25) { warn.classList.add("warn"); warn.textContent = "⚠ Total 15–25% — check your break-even before accepting."; }
+  else { warn.classList.add("bad"); warn.textContent = "🚨 Above 25% — likely below break-even. Negotiate down."; }
+}
+["ssOrder", "ssDisc", "ssBuy", "ssFree", "ssDisplay"].forEach(id => $(id).addEventListener("input", recalcSchemeStacker));
+
+// ============ 3. COUNTER ============
+function recalcCounter() {
+  const ask = num($("ccAsk"));
+  const max = num($("ccMax"));
+  const order = num($("ccOrder"));
+  $("ccAskVal").textContent = ask.toFixed(1) + "%";
+  $("ccMaxVal").textContent = max.toFixed(1) + "%";
+  $("ccA-sub").textContent = `Give ${max.toFixed(1)}% off`;
+  $("ccA-val").textContent = inr(order * (max / 100));
+  const discB = Math.max(0, max - 3);
+  const freeUnits = Math.max(1, Math.floor((order * (max - discB) / 100) / (order > 0 ? (order / 10) : 1)));
+  $("ccB-sub").textContent = `Give ${discB.toFixed(1)}% off + ${freeUnits} free units`;
+  $("ccB-val").textContent = inr(order * (discB / 100));
+  const discC = Math.max(0, max - 4);
+  const displayMoney = order * ((max - discC) / 100);
+  $("ccC-sub").textContent = `Give ${discC.toFixed(1)}% off + ${inr(displayMoney)} display`;
+  $("ccC-val").textContent = inr(order * (discC / 100));
+  const script = $("ccScript");
+  if (max < ask) {
+    script.textContent = `👉 Say: "I can't do ${ask.toFixed(1)}%, but here's what I CAN do — ${max.toFixed(1)}% off plus ${inr(order * 0.02)} display support. Same value to you."`;
+  } else {
+    script.textContent = `👉 Buyer's ask is within your max. Offer ${(max - 2).toFixed(1)}% and keep 2 pts in reserve.`;
+  }
+}
+["ccAsk", "ccMax", "ccOrder"].forEach(id => $(id).addEventListener("input", recalcCounter));
+
+// ============ 4. FREE UNITS ============
+function recalcFreeUnits() {
+  const buy = int($("fuBuy"));
+  const free = int($("fuFree"));
+  if (buy <= 0) { $("fuResult").textContent = "—"; $("fuText").textContent = "Enter a valid buy quantity"; return; }
+  const pctOff = (free / (buy + free)) * 100;
+  $("fuResult").textContent = pctOff.toFixed(2) + "% off";
+  $("fuText").textContent = `${buy}+${free} = ${pctOff.toFixed(2)}% effective discount. (Not ${((free / buy) * 100).toFixed(2)}% — that's the common mistake.)`;
+}
+["fuBuy", "fuFree"].forEach(id => $(id).addEventListener("input", recalcFreeUnits));
+
+// ============ 5. SLAB ============
+function recalcSlab() {
+  const cur = num($("osCurrent"));
+  const next = num($("osNext"));
+  const margin = num($("osMargin"));
+  $("osMarginVal").textContent = margin.toFixed(1) + "%";
+  const gap = Math.max(0, next - cur);
+  $("osGap").textContent = inr(gap);
+  $("osText").textContent = gap > 0 ? `Add ${inr(gap)} more to hit the ${inr(next)} slab.` : "Already at or above the next slab.";
+  $("osGain").textContent = gap > 0
+    ? `Extra margin earned once slab is hit: ${inr(next * (margin / 100))} on the full order.`
+    : `You're earning ${inr(cur * (margin / 100))} margin at the current slab.`;
+}
+["osCurrent", "osNext", "osMargin"].forEach(id => $(id).addEventListener("input", recalcSlab));
+
+// ============ 6. STOCK COVER ============
+function recalcStockCover() {
+  const units = int($("scUnits"));
+  const daily = num($("scDaily"));
+  if (daily <= 0) { $("scDays").textContent = "—"; return; }
+  const days = units / daily;
+  $("scDays").textContent = days.toFixed(1) + " days";
+  $("scText").textContent = `${units} units ÷ ${daily}/day = ${days.toFixed(1)} days of stock.`;
+  const w = $("scWarn");
+  w.classList.remove("good", "warn", "bad");
+  if (days < 7) { w.classList.add("bad"); w.textContent = "🚨 Under 7 days — will run out. Push a bigger order."; }
+  else if (days < 15) { w.classList.add("warn"); w.textContent = "⚠ 7–15 days — okay but tight."; }
+  else if (days <= 45) { w.classList.add("good"); w.textContent = "✓ 15–45 days — healthy cover."; }
+  else { w.classList.add("bad"); w.textContent = "🚨 Over 45 days — overstock risk."; }
+  $("rrDays").value = days.toFixed(1);
+  recalcReturnRisk();
+}
+["scUnits", "scDaily"].forEach(id => $(id).addEventListener("input", recalcStockCover));
+
+// ============ 7. RETURN RISK ============
+function recalcReturnRisk() {
+  const days = num($("rrDays"));
+  const type = $("rrType").value;
+  const vel = $("rrVelocity").value;
+  let risk = 0;
+  if (days > 60) risk += 3; else if (days > 45) risk += 2; else if (days > 30) risk += 1;
+  if (type === "cafe") risk += 2; else if (type === "modern") risk += 1;
+  if (vel === "slow") risk += 2; else if (vel === "medium") risk += 1;
+  const v = $("rrVerdict"), big = $("rrBig"), sub = $("rrSub");
+  v.classList.remove("good", "warn", "bad");
+  if (risk <= 1) { v.classList.add("good"); big.textContent = "LOW"; sub.textContent = "Order is safe. Place it."; }
+  else if (risk <= 3) { v.classList.add("warn"); big.textContent = "MEDIUM"; sub.textContent = "Consider reducing quantity by 20–30%."; }
+  else { v.classList.add("bad"); big.textContent = "HIGH"; sub.textContent = "Cut the order or split into two deliveries."; }
+}
+["rrDays"].forEach(id => $(id).addEventListener("input", recalcReturnRisk));
+$("rrType").addEventListener("change", recalcReturnRisk);
+$("rrVelocity").addEventListener("change", recalcReturnRisk);
+
+// ============ 8. SHELF SLOT ============
+function recalcShelfSlot() {
+  const a = getSku($("slotA").value);
+  const b = getSku($("slotB").value);
+  const ua = int($("slotAUnits"));
+  const ub = int($("slotBUnits"));
+  const aM = (a.mrp - a.cost) * ua;
+  const bM = (b.mrp - b.cost) * ub;
+  $("slotA-name").textContent = a.name;
+  $("slotA-sub").textContent = `${inr(a.mrp - a.cost)}/unit × ${ua} units`;
+  $("slotA-val").textContent = inr(aM);
+  $("slotB-name").textContent = b.name;
+  $("slotB-sub").textContent = `${inr(b.mrp - b.cost)}/unit × ${ub} units`;
+  $("slotB-val").textContent = inr(bM);
+  const diff = aM - bM;
+  const winner = diff >= 0 ? a.name : b.name;
+  const loser = diff >= 0 ? b.name : a.name;
+  $("slotWinner").textContent = `👉 Give the eye-level slot to ${winner}. It earns ${inr(Math.abs(diff))}/month more than ${loser}.`;
+}
+["slotA", "slotB", "slotAUnits", "slotBUnits"].forEach(id => {
+  const el = $(id);
+  el.addEventListener("input", recalcShelfSlot);
+  el.addEventListener("change", recalcShelfSlot);
+});
+
+// ============ 9. STORE RANK ============
+let stores = JSON.parse(localStorage.getItem("unibic_stores") || "null") || [
+  { name: "Sharma Kirana", margin: 4200, travel: 8 },
+  { name: "Ravi General", margin: 1800, travel: 25 },
+  { name: "Gupta Store", margin: 6100, travel: 12 },
+];
+function renderStores() {
+  const wrap = $("storeRows");
+  wrap.innerHTML = "";
+  stores.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px;padding:8px;background:var(--bg);border-radius:10px;border:1px solid var(--line);";
+    row.innerHTML = `
+      <input class="num" type="text" value="${s.name}" data-i="${i}" data-k="name" placeholder="Store name" style="text-align:left;font-size:var(--fs-sm);">
+      <button class="reset" data-del="${i}" style="padding:0 12px;margin:0;width:auto;font-size:1rem;">×</button>
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div>
+          <div style="font-size:var(--fs-xs);color:var(--muted);font-weight:700;margin-bottom:2px;">Margin ₹/mo
+            <span class="tip" tabindex="0" data-tip="Monthly margin this store earns you.">?</span>
+          </div>
+          <input class="num" type="number" value="${s.margin}" data-i="${i}" data-k="margin" inputmode="decimal" style="font-size:var(--fs-sm);">
+        </div>
+        <div>
+          <div style="font-size:var(--fs-xs);color:var(--muted);font-weight:700;margin-bottom:2px;">Travel min
+            <span class="tip" tabindex="0" data-tip="Round-trip travel time.">?</span>
+          </div>
+          <input class="num" type="number" value="${s.travel}" data-i="${i}" data-k="travel" inputmode="numeric" style="font-size:var(--fs-sm);">
+        </div>
+      </div>
+      <div style="grid-column:1/-1;font-size:var(--fs-sm);font-weight:700;padding-top:4px;" data-rpm="${i}"></div>
+    `;
+    wrap.appendChild(row);
+  });
+  initTooltips();
+  updateStoreRanks();
+  wrap.querySelectorAll("input[data-k]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = +inp.dataset.i, k = inp.dataset.k;
+      stores[i][k] = k === "name" ? inp.value : (parseFloat(inp.value) || 0);
+      localStorage.setItem("unibic_stores", JSON.stringify(stores));
+      updateStoreRanks();
+    });
+  });
+  wrap.querySelectorAll("button[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      stores.splice(+btn.dataset.del, 1);
+      localStorage.setItem("unibic_stores", JSON.stringify(stores));
+      renderStores();
+    });
+  });
+}
+function updateStoreRanks() {
+  const rated = stores.map((s, i) => ({ ...s, i, rpm: s.travel > 0 ? s.margin / s.travel : 0 }));
+  rated.sort((a, b) => b.rpm - a.rpm);
+  rated.forEach((r, rank) => {
+    const el = document.querySelector(`[data-rpm="${r.i}"]`);
+    if (!el) return;
+    const isLow = rank === rated.length - 1 && rated.length > 1;
+    el.innerHTML = `₹${Math.round(r.rpm)}/min ${isLow ? '<span style="color:var(--bad);">← skip candidate</span>' : rank === 0 ? '<span style="color:var(--good);">⭐ top</span>' : ''}`;
+  });
+  const w = $("storeWarn");
+  if (stores.length >= 2) {
+    w.classList.remove("warn");
+    w.classList.add("good");
+    w.textContent = "✓ Ranked by margin per travel-minute. Lowest is your skip candidate.";
+  }
+}
+$("addStoreBtn").addEventListener("click", () => {
+  stores.push({ name: "New store", margin: 1000, travel: 15 });
+  localStorage.setItem("unibic_stores", JSON.stringify(stores));
+  renderStores();
+});
+
+// ============ 10. PER-STORE BE ============
+function recalcPerStoreBE() {
+  const travel = num($("pbTravel"));
+  const costPerHour = num($("pbCost"));
+  const margin = num($("pbMargin"));
+  $("pbMarginVal").textContent = margin.toFixed(1) + "%";
+  const visitCost = (travel / 60) * costPerHour;
+  const minOrder = margin > 0 ? (visitCost / (margin / 100)) : 0;
+  $("pbMin").textContent = inr(minOrder);
+  $("pbText").textContent = `Visit costs ${inr(visitCost)} (travel). At ${margin.toFixed(1)}% margin, store must buy ${inr(minOrder)}/month to break even.`;
+}
+["pbTravel", "pbCost", "pbMargin"].forEach(id => $(id).addEventListener("input", recalcPerStoreBE));
+
+// ============ 11. DAY TALLY ============
+let dayOrders = JSON.parse(localStorage.getItem("unibic_day") || "[]");
+const TODAY_KEY = "unibic_day_date";
+(function checkDailyReset() {
+  const today = new Date().toISOString().slice(0, 10);
+  const lastDay = localStorage.getItem(TODAY_KEY);
+  if (lastDay && lastDay !== today) {
+    localStorage.removeItem("unibic_day");
+    dayOrders = [];
+  }
+  localStorage.setItem(TODAY_KEY, today);
+})();
+setInterval(() => {
+  const today = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(TODAY_KEY) !== today) {
+    localStorage.removeItem("unibic_day");
+    dayOrders = [];
+    localStorage.setItem(TODAY_KEY, today);
+    renderDayOrders();
+    toast("New day — Day Tally cleared");
+  }
+}, 60000);
+
+function renderDayOrders() {
+  const list = $("dtList");
+  list.innerHTML = "";
+  if (!dayOrders.length) {
+    list.innerHTML = '<div style="font-size:var(--fs-sm);color:var(--muted);text-align:center;padding:10px;">No orders logged yet.</div>';
+    $("dtSummary").style.display = "none";
+    $("dtCopyBtn").style.display = "none";
+    $("dtClearBtn").style.display = "none";
+    return;
+  }
+  let totalRev = 0, totalMargin = 0;
+  dayOrders.forEach(o => {
+    totalRev += o.rev;
+    totalMargin += o.net;
+    const item = document.createElement("div");
+    item.className = "list-item";
+    item.innerHTML = `
+      <div>
+        <div class="li-name">${o.name} × ${o.units}</div>
+        <div class="li-sub">${o.disc}% disc, ${o.scheme}% scheme</div>
+      </div>
+      <div class="li-val" style="color:${o.netPct >= 15 ? 'var(--good)' : o.netPct >= 0 ? 'var(--warn)' : 'var(--bad)'}">${inr(o.net)}<br><span style="font-size:var(--fs-xs);color:var(--muted);">${o.netPct.toFixed(1)}%</span></div>
+    `;
+    list.appendChild(item);
+  });
+  const blended = totalRev > 0 ? (totalMargin / totalRev) * 100 : 0;
+  $("dtSummary").style.display = "block";
+  $("dtTotalRev").textContent = inr(totalRev);
+  $("dtBlended").textContent = `Blended margin: ${blended.toFixed(1)}% (${inr(totalMargin)} net) across ${dayOrders.length} orders`;
+  $("dtCopyBtn").style.display = "block";
+  $("dtClearBtn").style.display = "block";
+}
+$("dtAddBtn").addEventListener("click", () => {
+  const s = getSku($("dtSku").value);
+  const units = int($("dtUnits"));
+  const disc = num($("dtDisc"));
+  const scheme = num($("dtScheme"));
+  const list = s.mrp * units;
+  const rev = list * (1 - disc / 100);
+  const schemeCost = list * (scheme / 100);
+  const net = rev - s.cost * units - schemeCost;
+  const netPct = rev > 0 ? (net / rev) * 100 : 0;
+  dayOrders.push({ name: s.name, units, disc, scheme, rev, net, netPct });
+  localStorage.setItem("unibic_day", JSON.stringify(dayOrders));
+  renderDayOrders();
+  toast("Logged: " + s.name + " × " + units);
+});
+$("dtClearBtn").addEventListener("click", () => {
+  if (!confirm("Clear all logged orders for today?")) return;
+  dayOrders = [];
+  localStorage.setItem("unibic_day", JSON.stringify(dayOrders));
+  renderDayOrders();
+});
+$("dtCopyBtn").addEventListener("click", () => {
+  let totalRev = 0, totalMargin = 0;
+  dayOrders.forEach(o => { totalRev += o.rev; totalMargin += o.net; });
+  const blended = totalRev > 0 ? (totalMargin / totalRev) * 100 : 0;
+  let text = `DAY REPORT — ${new Date().toLocaleDateString("en-IN")}\n`;
+  text += `${dayOrders.length} orders · ${inr(totalRev)} revenue · ${blended.toFixed(1)}% blended margin\n\n`;
+  dayOrders.forEach(o => {
+    text += `${o.name} × ${o.units} — ${o.disc}% disc, ${o.scheme}% scheme → ${inr(o.net)} (${o.netPct.toFixed(1)}%)\n`;
+  });
+  navigator.clipboard.writeText(text).then(() => toast("Copied to clipboard")).catch(() => toast("Copy failed"));
+});
+
+// ============ 12. TARGET GAP ============
+function recalcTarget() {
+  const target = num($("tgTarget"));
+  const mtd = num($("tgMTD"));
+  const days = int($("tgDays"));
+  const margin = num($("tgMargin"));
+  const gap = Math.max(0, target - mtd);
+  const daily = days > 0 ? gap / days : 0;
+  $("tgDaily").textContent = inr(daily) + "/day";
+  $("tgText").textContent = gap > 0
+    ? `Need ${inr(gap)} more in ${days} days = ${inr(daily)}/day. Margin target: ${margin.toFixed(1)}%.`
+    : `✓ Target achieved. ${inr(mtd - target)} above target — push for margin now.`;
+  const w = $("tgWarn");
+  w.classList.remove("good", "warn", "bad");
+  if (gap <= 0) { w.classList.add("good"); w.textContent = "✓ Target hit. Focus on margin quality for the rest of the month."; }
+  else if (daily < 5000) { w.classList.add("good"); w.textContent = "✓ Daily run-rate looks achievable."; }
+  else if (daily < 10000) { w.classList.add("warn"); w.textContent = "⚠ Daily run-rate is stretching. Prioritise high-margin SKUs."; }
+  else { w.classList.add("bad"); w.textContent = "🚨 Daily run-rate is very high. Escalate to area manager."; }
+}
+["tgTarget", "tgMTD", "tgDays", "tgMargin"].forEach(id => $(id).addEventListener("input", recalcTarget));
+
+// ============ INIT ============
+(function init() {
+  initTooltips();
+  const s = getSku("choco-chip");
+  $("mrp").value = s.mrp;
+  $("cost").value = s.cost;
+  $("sku").value = "choco-chip";
+  recalcDeal();
+  recalcSchemeStacker();
+  recalcCounter();
+  recalcFreeUnits();
+  recalcSlab();
+  recalcStockCover();
+  recalcReturnRisk();
+  recalcShelfSlot();
+  renderStores();
+  recalcPerStoreBE();
+  renderDayOrders();
+  recalcTarget();
+})();
+</script>
+</body>
+</html>
